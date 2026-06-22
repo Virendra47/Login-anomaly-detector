@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Advanced AI-powered security dashboard tracking brute force patterns, multi-factor tokens, and user timings anomalies.">
+  <title>Aegis | Autonomous Security Operations Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Startup Authentication Modal (blocks UI until login/register) -->
+  <div id="startup-auth-modal" class="auth-modal">
+    <div class="modal-panel">
+      <div class="modal-main">
+        <h2>Sign in to AEGIS</h2>
+        <div class="auth-tabs">
+          <button id="auth-tab-login" class="auth-tab active" onclick="showAuthTab('login')">Login</button>
+          <button id="auth-tab-register" class="auth-tab" onclick="showAuthTab('register')">Register</button>
+        </div>
+
+        <div id="auth-tab-content-login" class="auth-tab-content">
+          <form id="startup-login-form" onsubmit="handleStartupLogin(event)">
+            <div class="form-group">
+              <label for="startup-username">Username (key)</label>
+              <input id="startup-username" placeholder="e.g., alice" required>
+            </div>
+            <div class="form-group">
+              <label for="startup-password">Password</label>
+              <input id="startup-password" type="password" value="password123" required>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+          </form>
+          <div id="startup-login-msg" class="auth-msg"></div>
+          <div style="margin-top:8px; text-align:center;"><a href="#" onclick="openRequestResetModal(); return false;">Forgot password?</a></div>
+        </div>
+
+        <div id="auth-tab-content-register" class="auth-tab-content hidden">
+          <form id="startup-register-form" onsubmit="handleStartupRegister(event)">
+            <div class="form-group">
+              <label for="reg-username">Username (key)</label>
+              <input id="reg-username" placeholder="e.g., newuser" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-displayname">Display Name</label>
+              <input id="reg-displayname" placeholder="Full name">
+            </div>
+            <div class="form-group">
+              <label for="reg-email">Email (for verification/reset)</label>
+              <input id="reg-email" type="email" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label for="reg-password">Password</label>
+              <input id="reg-password" type="password" placeholder="Choose a password" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-password-confirm">Confirm Password</label>
+              <input id="reg-password-confirm" type="password" placeholder="Repeat password" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-role">Role</label>
+              <input id="reg-role" placeholder="Role (optional)">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success">Register & Login</button>
+            </div>
+          </form>
+          <div id="startup-register-msg" class="auth-msg"></div>
+        </div>
+      </div>
+
+      <div class="modal-side-illustration">
+        <div class="logo-emoji">🛡️</div>
+        <p><strong>AEGIS Secure Pro</strong><br>Enterprise-level access control with behavioral baselining.</p>
+        <div class="small-features">
+          <div class="feat">✅ Strong password hashing</div>
+          <div class="feat">🔁 Email verification & reset</div>
+          <div class="feat">📊 Real-time anomaly detection</div>
+        </div>
+        <div style="margin-top:12px;"><small class="text-muted">Tip: use <strong>password123</strong> for demo users.</small></div>
+      </div>
+    </div>
+  </div>
+  <!-- Cyberpunk Visual Effects -->
+  <div class="cyber-glow-1"></div>
+  <div class="cyber-glow-2"></div>
+  <div class="cyber-grid"></div>
+
+  <!-- Real-time Alerts Notification Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="dashboard-wrapper">
+    <!-- Header Section -->
+    <header class="app-header">
+      <div class="header-logo">
+        <div class="logo-shield">🛡️</div>
+        <div class="logo-text">
+          <h1>AEGIS SECURE PRO</h1>
+          <p>Autonomous Anomaly & Threat Detection Node</p>
+        </div>
+      </div>
+      
+      <!-- System Threat Monitor -->
+      <div class="threat-hud">
+        <div class="hud-indicator">
+          <span class="pulse-ring red"></span>
+          <span class="threat-status-dot green" id="threat-dot"></span>
+          <span class="threat-label">FIREWALL HUD:</span>
+          <span class="threat-value safe" id="threat-level-val">SECURE</span>
+        </div>
+        <div class="clock-display" id="system-clock">10:41:34 AM</div>
+      </div>
+      <div class="header-actions">
+        <div id="current-user-display" class="current-user" style="display:none; align-items:center; gap:8px;">
+          <span id="current-user-avatar">👤</span>
+          <div style="text-align:left; line-height:1;">
+            <div id="current-user-name" style="font-weight:600; font-size:14px;">User</div>
+            <div id="current-user-role" style="font-size:11px; color:var(--text-muted);">Role</div>
+          </div>
+        </div>
+        <button id="btn-change-pass" class="btn btn-outline" style="display:none; margin-left:6px;" onclick="showChangePasswordModal()">Change Password</button>
+        <button id="btn-logout" class="btn btn-outline" style="display:none; margin-left:6px;" onclick="handleLogout()">Logout</button>
+      </div>
+    </header>
+
+    <!-- Enterprise Multi-Tab Navigation Bar -->
+    <nav class="dashboard-tabs-nav" aria-label="Dashboard views">
+      <button class="tab-btn active" onclick="switchTab('soc-tab')">📡 Security Operations (SOC)</button>
+      <button class="tab-btn" onclick="switchTab('behavior-tab')">👤 Behavioral Profiles Explorer</button>
+      <button class="tab-btn" onclick="switchTab('firewall-tab')">🔥 Firewall & Mitigation Hub</button>
+    </nav>
+
+    <!-- Metrics Row (Always visible for fast scannability) -->
+    <section class="metrics-container" aria-label="Security Metrics Summary">
+      <div class="metric-card" id="metric-total-logins">
+        <div class="metric-icon blue">🔑</div>
+        <div class="metric-info">
+          <h3>Network Login Passes</h3>
+          <p class="metric-value" id="stat-total-logins">0</p>
+        </div>
+      </div>
+      <div class="metric-card" id="metric-failed-logins">
+        <div class="metric-icon red">⚠️</div>
+        <div class="metric-info">
+          <h3>Access Rejections</h3>
+          <p class="metric-value" id="stat-failed-attempts">0</p>
+        </div>
+      </div>
+      <div class="metric-card" id="metric-active-alerts">
+        <div class="metric-icon amber animate-pulse">🔥</div>
+        <div class="metric-info">
+          <h3>Active Anomalies</h3>
+          <p class="metric-value text-glow-amber" id="stat-active-alerts">0</p>
+        </div>
+      </div>
+      <div class="metric-card" id="metric-email-status">
+        <div class="metric-icon blue">✉️</div>
+        <div class="metric-info">
+          <h3>Email Alerts</h3>
+          <p class="metric-value" id="stat-email-status">Loading...</p>
+        </div>
+      </div>
+      <div class="metric-card" id="metric-locked-accounts">
+        <div class="metric-icon red">🔒</div>
+        <div class="metric-info">
+          <h3>Profiles Suspended</h3>
+          <p class="metric-value text-glow-red" id="stat-locked-accounts">0</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         TAB 1: SECURITY OPERATIONS CENTER (SOC)
+         ========================================================================== -->
+    <div id="soc-tab" class="tab-content active-content">
+      <div class="dashboard-grid">
+        
+        <!-- SOC Left Column (Interactive Forms & Simulator) -->
+        <div class="grid-col left-col">
+          
+          <!-- Threat Sandbox -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <h2>⚡ Advanced Threat Simulator Sandbox</h2>
+              <span class="card-subtitle">Automated scenario emulation pipeline</span>
+            </div>
+            <div class="card-body">
+              <p class="simulation-desc">Launch multi-vector cyber threat emulations to test machine-learning behavioral shields instantly.</p>
+              
+              <div class="simulation-actions">
+                <button class="btn btn-danger btn-glow" id="btn-sim-bruteforce" onclick="triggerSimulation('brute_force')">
+                  <span class="btn-icon">💀</span> Simulate Brute Force
+                </button>
+                <button class="btn btn-warning btn-glow" id="btn-sim-timing" onclick="triggerSimulation('unusual_timing')">
+                  <span class="btn-icon">⏰</span> Timing Anomaly (11 PM)
+                </button>
+                <button class="btn btn-purple btn-glow" id="btn-sim-stuffing" onclick="triggerSimulation('credential_stuffing')">
+                  <span class="btn-icon">💣</span> Credential Stuffing
+                </button>
+                <button class="btn btn-info btn-glow" id="btn-sim-test" onclick="triggerSimulation('test_alert')">
+                  <span class="btn-icon">✉️</span> Send Test Alert
+                </button>
+                <button class="btn btn-success" id="btn-sim-clean" onclick="triggerSimulation('clean_traffic')">
+                  <span class="btn-icon">🟢</span> Generate Clean Traffic
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Interactive Login Client -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <h2>👤 Manual Access Simulator Portal</h2>
+              <span class="card-subtitle">Interactive credential check & scheduling testing</span>
+            </div>
+            <div class="card-body">
+              <form id="interactive-login-form" onsubmit="handleManualLogin(event)">
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="login-username">Target Profile</label>
+                    <select id="login-username" class="custom-select" onchange="updateSelectedUserBaseline()">
+                      <option value="alice">👩‍💼 Alice Smith (Finance Analyst - Day)</option>
+                      <option value="bob">👨‍💻 Bob Chen (Lead Systems Eng - Night)</option>
+                      <option value="charlie">🧑‍🔧 Charlie Miller (Ops Specialist - Day)</option>
+                      <option value="diana_hr">👩‍⚕️ Diana Prince (HR Director - Morning)</option>
+                      <option value="ethan_dev">🧑‍💻 Ethan Hunt (Frontend Dev - Afternoon)</option>
+                      <option value="fiona_sales">👩‍💻 Fiona Gallagher (Sales Director - Extended)</option>
+                      <option value="george_ceo">👨‍💼 George Stark (CEO - Executive 24h)</option>
+                      <option value="hannah_support">👩‍💼 Hannah Abbott (Customer Support A - Morning)</option>
+                      <option value="ian_support">👨‍💼 Ian Malcolm (Customer Support B - Evening)</option>
+                      <option value="julia_sysadmin">👩‍🚀 Julia Roberts (Cloud Ops Admin - Late Night)</option>
+                      <option value="kevin_marketing">🧑‍🎨 Kevin Bacon (Marketing Lead - Core Day)</option>
+                      <option value="sec_admin">🛡️ Security Administrator (Sysadmin Warden - Core Day)</option>
+                      <option value="unknown_intruder">🥷 Unknown / Intruding Account</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="login-password">Password Token</label>
+                    <div class="input-wrapper">
+                      <input type="password" id="login-password" value="password123" placeholder="Enter password...">
+                      <small class="helper-text">"password123" grants Success, any other key triggers Failure.</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Scheduling slider -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <div class="slider-header">
+                      <label for="login-hour">Simulated Access Hour</label>
+                      <span class="badge" id="hour-badge">10:00 AM</span>
+                    </div>
+                    <input type="range" id="login-hour" min="0" max="23" value="10" class="custom-slider" oninput="onHourSliderChange(this.value)">
+                    <div class="slider-labels">
+                      <span>12 AM</span>
+                      <span>6 AM</span>
+                      <span>12 PM</span>
+                      <span>6 PM</span>
+                      <span>11 PM</span>
+                    </div>
+                    <div class="baseline-preview" id="user-baseline-preview">
+                      <!-- Render 24 timeline blocks -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Custom IP input -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="login-ip">Simulated IP Address</label>
+                    <input type="text" id="login-ip" value="192.168.1.15" placeholder="e.g., 198.51.100.4">
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary w-full" id="btn-submit-auth">
+                    🔐 Submit Authentication Attempt
+                  </button>
+                </div>
+              </form>
+
+              <!-- Progress logs checklist -->
+              <div id="auth-progress-checklist" class="auth-progress-checklist hidden">
+                <div class="check-step" id="step-1"><span class="step-dot"></span> Parsing credential inputs...</div>
+                <div class="check-step" id="step-2"><span class="step-dot"></span> Verifying firewall rules & blacklists...</div>
+                <div class="check-step" id="step-3"><span class="step-dot"></span> Auditing cryptographic credentials...</div>
+                <div class="check-step" id="step-4"><span class="step-dot"></span> Evaluating behavioral timing anomalies...</div>
+              </div>
+              
+              <div id="login-result-alert" class="login-feedback-panel hidden"></div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- SOC Right Column (Alerts Feed & Audit Log) -->
+        <div class="grid-col right-col">
+          
+          <!-- Alerts Feed -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <div class="flex-justify-between w-full">
+                <div>
+                  <h2>🚨 Active Threats & Real-Time Alert Feed</h2>
+                  <span class="card-subtitle">Immediate mitigation hooks</span>
+                </div>
+                <button class="btn btn-small btn-outline-danger" onclick="clearAllData()">🧹 Purge Engine Records</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="alerts-feed-wrapper" id="alerts-feed">
+                <!-- Alerts feed -->
+              </div>
+            </div>
+          </section>
+
+          <!-- System Audit Log Table -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <div class="flex-justify-between w-full">
+                <div>
+                  <h2>📜 Security Event Audit Logs</h2>
+                  <span class="card-subtitle">Immutable network connection logs</span>
+                </div>
+                <button class="btn btn-small btn-outline" id="btn-export-csv" onclick="exportLogsToCSV()">📥 Download CSV Report</button>
+              </div>
+            </div>
+            <div class="card-body no-padding">
+              <div class="table-responsive">
+                <table class="audit-table">
+                  <thead>
+                    <tr>
+                      <th>Time Frame</th>
+                      <th>User Node</th>
+                      <th>Access Hour</th>
+                      <th>IP Origin</th>
+                      <th>Result Code</th>
+                      <th>Mitigations / Anomalies</th>
+                      <th>Risk factor</th>
+                    </tr>
+                  </thead>
+                  <tbody id="audit-log-body">
+                    <!-- Log lists -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         TAB 2: BEHAVIORAL PROFILE EXPLORER
+         ========================================================================== -->
+    <div id="behavior-tab" class="tab-content">
+      <div class="card glass-card">
+        <div class="card-header">
+          <h2>📊 Machine Learning Behavioral Baselining Explorer</h2>
+          <span class="card-subtitle">Baseline schedules (Green) vs. Actual login hours (Cyan)</span>
+        </div>
+        <div class="card-body">
+          <p class="section-desc-para">
+            Every team member has a custom work baseline established over historical audits. 
+            Clicking a profile card updates the analytical chart below to compare that user's allowed scheduled hours (Green) against actual network activity (Cyan).
+          </p>
+
+          <!-- 12-User Behavioral Profile Grid -->
+          <div class="behavioral-grid" id="behavioral-profiles-cards">
+            <!-- Dynamic profile cards -->
+          </div>
+
+          <!-- Comparison Analytical Chart -->
+          <div class="chart-section-wrapper">
+            <div class="chart-header-row">
+              <h3 id="chart-user-heading">Alice Smith's Schedule Integrity Chart</h3>
+              <p>Compare allowed working baseline hours vs real logged access times</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="loginHoursChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         TAB 3: FIREWALL & MITIGATION HUB
+         ========================================================================== -->
+    <div id="firewall-tab" class="tab-content">
+      <div class="dashboard-grid">
+        
+        <!-- Left: Blacklists & Settings -->
+        <div class="grid-col left-col">
+          
+          <!-- IP Blacklist Firewall -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <h2>🔥 Network IP Blacklist Rules</h2>
+              <span class="card-subtitle">Active packet filtering parameters</span>
+            </div>
+            <div class="card-body">
+              <p class="simulation-desc">Incoming packets from blocked IP addresses are intercepted at the boundary layer before user authentication resolves.</p>
+              
+              <!-- Block IP Form -->
+              <form id="block-ip-form" onsubmit="handleBlockIP(event)" class="form-row-ip">
+                <input type="text" id="blacklist-ip-input" placeholder="Enter IP address to block..." required>
+                <button type="submit" class="btn btn-danger">🚫 Block IP Address</button>
+              </form>
+
+              <!-- List of Blocked IPs -->
+              <div class="blacklist-wrapper">
+                <h4>Active Firewall Blacklisted IPs:</h4>
+                <ul class="blacklist-ul" id="blacklist-ips-list">
+                  <!-- Blocked IPs lists -->
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- Dynamic settings configuration -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <h2>⚙️ Autonomous Threshold Calibration</h2>
+              <span class="card-subtitle">Adjust detection limits & lockout settings</span>
+            </div>
+            <div class="card-body">
+              <form id="config-form" onsubmit="handleConfigUpdate(event)">
+                
+                <div class="config-row">
+                  <div class="config-label-group">
+                    <label for="cfg-failed-attempts">Brute Force Limit Threshold</label>
+                    <span class="config-value" id="val-failed-attempts">5 fails</span>
+                  </div>
+                  <input type="range" id="cfg-failed-attempts" min="2" max="10" value="5" class="custom-slider" oninput="document.getElementById('val-failed-attempts').innerText = this.value + ' fails'">
+                  <p class="config-help">Incorrect login counts that trigger an automatic account lock.</p>
+                </div>
+
+                <div class="config-row">
+                  <div class="config-label-group">
+                    <label for="cfg-window">Brute Force Window Size</label>
+                    <span class="config-value" id="val-window">60s</span>
+                  </div>
+                  <input type="range" id="cfg-window" min="15" max="300" step="15" value="60" class="custom-slider" oninput="document.getElementById('val-window').innerText = this.value + 's'">
+                  <p class="config-help">Time window in seconds to calculate consecutive login failures.</p>
+                </div>
+
+                <div class="config-row">
+                  <div class="config-label-group">
+                    <label for="cfg-lockout">Profile Suspension Timer</label>
+                    <span class="config-value" id="val-lockout">5 mins</span>
+                  </div>
+                  <input type="range" id="cfg-lockout" min="1" max="60" value="5" class="custom-slider" oninput="document.getElementById('val-lockout').innerText = this.value + ' mins'">
+                  <p class="config-help">Length of temporary lockout suspension for flagged users.</p>
+                </div>
+
+                <!-- Dynamic Machine learning toggle -->
+                <div class="config-row flex-justify-between">
+                  <div>
+                    <label style="font-size:13px; font-weight:600;">Neural Baseline Re-Learning</label>
+                    <p class="config-help" style="margin-top:2px;">Resolve-and-Learn automatically updates baseline hours with resolved times.</p>
+                  </div>
+                  <div class="switch-wrapper">
+                    <input type="checkbox" id="cfg-autolearn" class="toggle-checkbox" checked>
+                    <label for="cfg-autolearn" class="toggle-label"></label>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-outline w-full" id="btn-save-config">
+                  💾 Synchronize Engine Guidelines
+                </button>
+              </form>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Right: recommended mitigations list -->
+        <div class="grid-col right-col">
+          
+          <!-- MFA User Enforcement Panel -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <h2>🔒 Multi-Factor Authentication (MFA) Panel</h2>
+              <span class="card-subtitle">Risk reduction token control</span>
+            </div>
+            <div class="card-body">
+              <p class="simulation-desc">Enforcing Multi-Factor Authentication (MFA) adds a physical token requirement that reduces user risk factor computations by **60%**.</p>
+              
+              <div class="mfa-users-list" id="mfa-users-list-container">
+                <!-- Javascript will inject list of 12 users with beautiful MFA toggle switches! -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Security Recommendations Advisories -->
+          <section class="card glass-card">
+            <div class="card-header">
+              <h2>💡 Defensive Advisories & Dynamic Mitigations</h2>
+              <span class="card-subtitle">Real-time security advice</span>
+            </div>
+            <div class="card-body">
+              <div class="advisories-wrapper" id="mitigation-advisories">
+                <!-- Injected security recommendations -->
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>© 2026 AEGIS Secure Cybersecurity Systems. Pair Programmed with Antigravity.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+  <!-- Change Password Modal -->
+  <div id="change-password-modal" class="auth-modal hidden">
+    <div class="modal-panel">
+      <h3>Change Password</h3>
+      <form id="change-password-form" onsubmit="handleChangePassword(event)">
+        <div class="form-group">
+          <label for="cp-old">Current Password</label>
+          <input id="cp-old" type="password" required>
+        </div>
+        <div class="form-group">
+          <label for="cp-new">New Password</label>
+          <input id="cp-new" type="password" required>
+        </div>
+        <div class="form-group">
+          <label for="cp-confirm">Confirm New Password</label>
+          <input id="cp-confirm" type="password" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Update Password</button>
+          <button type="button" class="btn btn-outline" onclick="hideChangePasswordModal()">Cancel</button>
+        </div>
+      </form>
+      <div id="cp-msg" class="auth-msg"></div>
+    </div>
+  </div>
+  <!-- Request Reset Modal -->
+  <div id="request-reset-modal" class="auth-modal hidden">
+    <div class="modal-panel">
+      <h3>Request Password Reset</h3>
+      <form id="request-reset-form" onsubmit="handleRequestReset(event)">
+        <div class="form-group">
+          <label for="rr-identifier">Username or Email</label>
+          <input id="rr-identifier" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Send Reset Token</button>
+          <button type="button" class="btn btn-outline" onclick="closeRequestResetModal()">Cancel</button>
+        </div>
+      </form>
+      <div id="rr-msg" class="auth-msg"></div>
+    </div>
+  </div>
+
+  <!-- Reset With Token Modal (paste token from email) -->
+  <div id="reset-token-modal" class="auth-modal hidden">
+    <div class="modal-panel">
+      <h3>Reset Password (Enter Token)</h3>
+      <form id="reset-token-form" onsubmit="handleResetWithToken(event)">
+        <div class="form-group">
+          <label for="rt-token">Reset Token</label>
+          <input id="rt-token" required>
+        </div>
+        <div class="form-group">
+          <label for="rt-new">New Password</label>
+          <input id="rt-new" type="password" required>
+        </div>
+        <div class="form-group">
+          <label for="rt-confirm">Confirm New Password</label>
+          <input id="rt-confirm" type="password" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Reset Password</button>
+          <button type="button" class="btn btn-outline" onclick="closeResetTokenModal()">Cancel</button>
+        </div>
+      </form>
+      <div id="rt-msg" class="auth-msg"></div>
+    </div>
+  </div>
+
+  <!-- Verify Token Modal -->
+  <div id="verify-token-modal" class="auth-modal hidden">
+    <div class="modal-panel">
+      <h3>Verify Email</h3>
+      <form id="verify-token-form" onsubmit="handleVerifyToken(event)">
+        <div class="form-group">
+          <label for="vt-token">Verification Token</label>
+          <input id="vt-token" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Verify</button>
+          <button type="button" class="btn btn-outline" onclick="closeVerifyModal()">Cancel</button>
+        </div>
+      </form>
+      <div id="vt-msg" class="auth-msg"></div>
+    </div>
+  </div>
+</body>
+</html>

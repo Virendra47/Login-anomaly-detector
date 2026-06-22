@@ -1,0 +1,17 @@
+{
+  "name": "login-anomaly-detection-system",
+  "version": "1.0.0",
+  "description": "Failed login brute-force and unusual timing anomaly detection system",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.5",
+    "sqlite3": "^5.1.6"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}
