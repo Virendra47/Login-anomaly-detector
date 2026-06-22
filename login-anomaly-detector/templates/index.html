@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Anomaly Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="security-header">
+                <h1>🔐 Secure Login Portal</h1>
+                <p>Anomaly Detection & Alert System</p>
+            </div>
+            
+            {% if error %}
+            <div class="alert error">
+                ⚠️ {{ error }}
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="/login" class="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required placeholder="Enter username">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required placeholder="Enter password">
+                </div>
+                
+                <button type="submit">Login</button>
+            </form>
+            
+            <div class="info">
+                <p>Demo credentials: <strong>admin</strong> / <strong>admin123</strong></p>
+                <p class="note">⚠️ Multiple failed attempts will trigger alerts and account lockout</p>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🛡️ Failed Login Detection</h3>
+                <p>Monitors multiple consecutive failed attempts (threshold: 5)</p>
+            </div>
+            <div class="feature">
+                <h3>⏰ Unusual Timing Analysis</h3>
+                <p>Detects logins outside normal user behavior patterns</p>
+            </div>
+            <div class="feature">
+                <h3>🚨 Real-time Alerts</h3>
+                <p>Immediate notifications for suspicious activities</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

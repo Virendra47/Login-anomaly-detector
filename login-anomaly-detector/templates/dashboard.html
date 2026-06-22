@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Anomaly Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <div class="nav-brand">🔐 Security Monitor</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+    
+    <div class="dashboard">
+        <div class="welcome">
+            <h2>Welcome, {{ username }}!</h2>
+            <p>Live Security Monitoring Dashboard</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_alerts }}</div>
+                <div class="stat-label">Total Alerts</div>
+            </div>
+            <div class="stat-card high">
+                <div class="stat-value">{{ high_severity + critical_severity }}</div>
+                <div class="stat-label">High/Critical Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ failed_attempts_last_24h }}</div>
+                <div class="stat-label">Failed Attempts (24h)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ unusual_logins }}</div>
+                <div class="stat-label">Unusual Timing Alerts</div>
+            </div>
+        </div>
+        
+        <div class="recent-alerts">
+            <h3>⚠️ Recent Alerts</h3>
+            <table>
+                <thead>
+                    <tr><th>Time</th><th>Type</th><th>Severity</th><th>Message</th></tr>
+                </thead>
+                <tbody>
+                    {% for alert in recent_alerts %}
+                    <tr class="severity-{{ alert.severity }}">
+                        <td>{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ alert.alert_type }}</td>
+                        <td><span class="badge badge-{{ alert.severity }}">{{ alert.severity }}</span></td>
+                        <td>{{ alert.message[:50] }}...</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

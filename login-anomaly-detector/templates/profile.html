@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Security Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <div class="nav-brand">🔐 Security Monitor</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+    
+    <div class="profile-page">
+        <h2>👤 User Profile: {{ user.username }}</h2>
+        
+        <div class="profile-info">
+            <div class="info-card">
+                <h3>Behavior Baseline</h3>
+                <p>Typical Login Hours: <strong>{{ user.baseline_hours }}</strong></p>
+                <p>Account Created: {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+                <p>Last Successful Login: {{ user.last_successful_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_successful_login else 'Never' }}</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Hour Distribution</h3>
+                <div class="hour-chart">
+                    {% for hour, count in hour_distribution.items() %}
+                    <div class="hour-bar">
+                        <span>{{ hour }}:00</span>
+                        <div class="bar" style="width: {{ count * 10 }}px">{{ count }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="login-history">
+            <h3>📜 Recent Login History</h3>
+            <table>
+                <thead>
+                    <tr><th>Time</th><th>IP Address</th><th>Hour</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for login in login_history %}
+                    <tr class="{% if login.success %}success{% else %}failed{% endif %}">
+                        <td>{{ login.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ login.ip_address }}</td>
+                        <td>{{ login.hour }}:00</td>
+                        <td>{% if login.success %}✅ Success{% else %}❌ Failed{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
